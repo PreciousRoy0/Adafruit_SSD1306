@@ -501,7 +501,11 @@ bool Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, bool reset,
   clearDisplay();
 
 #ifndef SSD1306_NO_SPLASH
-  if (HEIGHT > 32) {
+  if (HEIGHT == 32 ) {
+    drawBitmap((WIDTH - splash3_width) / 2, (HEIGHT - splash3_height) / 2,
+               splash3_data, splash3_width, splash3_height, 1);
+  }
+  else if (HEIGHT > 32) {
     drawBitmap((WIDTH - splash1_width) / 2, (HEIGHT - splash1_height) / 2,
                splash1_data, splash1_width, splash1_height, 1);
   } else {
@@ -589,7 +593,7 @@ bool Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, bool reset,
   uint8_t comPins = 0x02;
   contrast = 0x8F;
 
-  if ((WIDTH == 128) && (HEIGHT == 32)) {
+   if ((WIDTH == 128) && (HEIGHT == 32)) {
     comPins = 0x02;
     contrast = 0x8F;
   } else if ((WIDTH == 128) && (HEIGHT == 64)) {
@@ -598,6 +602,9 @@ bool Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, bool reset,
   } else if ((WIDTH == 96) && (HEIGHT == 16)) {
     comPins = 0x2; // ada x12
     contrast = (vccstate == SSD1306_EXTERNALVCC) ? 0x10 : 0xAF;
+  } else if ((WIDTH == 64) && (HEIGHT == 32)) { 
+    comPins = 0x12; // ada x12
+    contrast = (vccstate == SSD1306_EXTERNALVCC) ? 0x10 : 0xCF;
   } else {
     // Other screen varieties -- TBD
   }
@@ -679,7 +686,8 @@ void Adafruit_SSD1306::drawPixel(int16_t x, int16_t y, uint16_t color) {
             Follow up with a call to display(), or with other graphics
             commands as needed by one's own application.
 */
-void Adafruit_SSD1306::clearDisplay(void) {
+void Adafruit_SSD1306::clearDisplay(void) 
+{
   memset(buffer, 0, WIDTH * ((HEIGHT + 7) / 8));
 }
 
@@ -994,13 +1002,20 @@ uint8_t *Adafruit_SSD1306::getBuffer(void) { return buffer; }
 */
 void Adafruit_SSD1306::display(void) {
   TRANSACTION_START
-  static const uint8_t PROGMEM dlist1[] = {
+    static const uint8_t PROGMEM dlist1[] = {
       SSD1306_PAGEADDR,
-      0,                      // Page start address
+      0x0,                    // Page start address
       0xFF,                   // Page end (not really, but works here)
-      SSD1306_COLUMNADDR, 0}; // Column start address
+      SSD1306_COLUMNADDR};    // Column start address
   ssd1306_commandList(dlist1, sizeof(dlist1));
-  ssd1306_command1(WIDTH - 1); // Column end address
+
+  if((WIDTH == 64)) {
+    ssd1306_command1(0x20);
+    ssd1306_command1(0x20 + (WIDTH-1)); // Column end address
+  } else {
+    ssd1306_command1(0);
+    ssd1306_command1((WIDTH-1)); // Column end address
+  }
 
 #if defined(ESP8266)
   // ESP8266 needs a periodic yield() call to avoid watchdog reset.

@@ -176,6 +176,7 @@ protected:
                    ///< SPI.cpp, SPI.h
   TwoWire *wire;   ///< Initialized during construction when using I2C. See
                    ///< Wire.cpp, Wire.h
+  uint16_t bufferWidth; //< Actual buffer width including offset if nedded (64 is 96)
   uint8_t *buffer; ///< Buffer data used for display buffer. Allocated when
                    ///< begin method is called.
   int8_t i2caddr;  ///< I2C address initialized when begin method is called.
